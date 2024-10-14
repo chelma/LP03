@@ -28,18 +28,41 @@ Additionally, you must ALWAYS follow these code_guidelines for the code you prod
     and finally the transformation code.
 - While you may generate multiple functions to assist in the transformation and make the code more readable,
     the final transformation should be a single function.  It MUST have the following signature:
-        `def transform(source_json: Dict[str, Any]) -> Dict[str, Any]:`
+        `def transform(source_json: Dict[str, Any]) -> List[Dict[str, Any]]:`
 </code_guidelines>
 
 The source cluster's version is <source_version>{source_version}</source_version>.
 
+If there is any special guidance for this source_version, it will be provided here: <source_guidance>{source_guidance}</source_guidance>
+
 The target cluster's version is <target_version>{target_version}</target_version>.
+
+The index-level settings JSON from the source cluster will be in the following format:
+<source_json_format>
+* A dictionary with two keys: "indexName" and "indexJson".
+* The "indexName" key will contain a string with the original name of the index.
+* The "indexJson" key will contain a dictionary with the raw JSON defining the index's configuration.
+</source_json_format>
 
 The index-level settings JSON from the source cluster is:
 <source_json>{source_json}</source_json>
 """
 
+es_68_source_guidance = """
+<multitype_mapping_guidance>
+If the source JSON for the index contains multiple mapping types, will create a separate index for each type rather than merging the types into a single typeless mapping.
+
+You will do this by ensuring your transform code returns each new index as a separate dictionary the output list.
+</multitype_mapping_guidance>
+"""
+
+
 def get_transform_index_prompt(source_version: str, target_version: str, source_json: Dict[str, Any]) -> str:
     return SystemMessage(
-        content=index_prompt_template.format(source_version=source_version, target_version=target_version, source_json=source_json)
+        content=index_prompt_template.format(
+            source_version=source_version,
+            source_guidance=es_68_source_guidance,
+            target_version=target_version,
+            source_json=source_json
+        )
     )

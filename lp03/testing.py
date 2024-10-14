@@ -10,11 +10,9 @@ configure_logging("./debug.log", "./info.log")
 
 logger = logging.getLogger(__name__)
 
-
-system_message = get_transform_index_prompt(
-    "Elasticsearch 6.8",
-    "OpenSearch 2.14",
-    {
+transform_input = {
+    "indexName": "test_index",
+    "indexJson": {
         "settings": {
             "index": {
                 "number_of_shards": 1,
@@ -33,10 +31,18 @@ system_message = get_transform_index_prompt(
                 }
             }
         }
-        }
+    }
+}
+
+
+system_message = get_transform_index_prompt(
+    "Elasticsearch 6.8",
+    "OpenSearch 2.14",
+    transform_input
 )
 
 python_state = PythonState(
+    input = transform_input,
     python_turns = [
         system_message
     ],
