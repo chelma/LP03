@@ -1,8 +1,7 @@
 from functools import wraps
-import importlib.util
 import json
 import logging
-from typing import Annotated, Any, Callable, Dict, List, Literal
+from typing import Annotated, Any, Callable, Dict, List
 from typing_extensions import TypedDict
 import uuid
 
@@ -14,7 +13,10 @@ from langgraph.graph.message import add_messages
 from langgraph.graph.state import CompiledGraph
 
 from python_expert.tools import TOOLS_ALL, TOOLS_NORMAL, Transform, make_transform_tool
-from utilities.transforms import get_transform_file_path, get_transform_input_file_path, get_transform_output_file_path, load_transform_from_file
+from utilities.opensearch_client import OpenSearchClient
+from utilities.rest_client import ConnectionDetails, RESTClient
+from utilities.testing import test_index_transform
+from utilities.transforms import get_transform_file_path, get_transform_input_file_path, get_transform_output_file_path, get_transform_report_file_path, load_transform_from_file
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +31,9 @@ llm_with_tools = llm.bind_tools(TOOLS_ALL)
 
 # Define the state our graph will be operating on
 class PythonState(TypedDict):
+    # Store the connection details for the Target Cluster we will use to test the transformed input
+    connection_details: ConnectionDetails
+
     # Store a copy of the original input and current transform output
     input: Dict[str, Any]
     output: List[Dict[str, Any]]
@@ -141,23 +146,31 @@ def node_test_transform(state: PythonState) -> Dict[str, Any]:
     transform_function = load_transform_from_file(transform_file_path)
 
     # Execute the transform using the input data
-    output_data = transform_function(input_data)
+    test_client = OpenSearchClient(
+        RESTClient(state["connection_details"])
+    )
+    result = test_index_transform(input_data, transform_function, test_client)
 
+    # Store the result of the test in a file
+    report_file_path = get_transform_report_file_path(state["transform_files_dir"], state["transform_id"])
+    with open(report_file_path, "w") as f:
+        f.write(json.dumps(result.to_json(), indent=4))
+        
     # Store the output in a file
     output_file_path = get_transform_output_file_path(state["transform_files_dir"], state["transform_id"])
     with open(output_file_path, "w") as f:
-        f.write(json.dumps(output_data, indent=4))
+        f.write(json.dumps(result.output, indent=4))
 
     # Update our State and exit the node.  We create a tool message to capture our work testing the transform,
     # and an AIMessage message to return to the original caller.
-    result = []
-    transform_test_result_message = f"Result of executing the transform on the input:\n{json.dumps(output_data)}"
+    messages = []
+    transform_test_result_message = f"Result of executing the transform on the input:\n{json.dumps(result.to_json())}"
     tool_message = ToolMessage(name="TestTransform", content=transform_test_result_message, tool_call_id=uuid.uuid4())
     ai_message = AIMessage(content=f"Transform tested successfully.  Output written to: {output_file_path}")
-    result.append(tool_message)
-    result.append(ai_message)
+    messages.append(tool_message)
+    messages.append(ai_message)
 
-    return {"python_turns": result}
+    return {"python_turns": messages, "output": result.output}
 
 python_graph.add_node("node_validate_starting_state", node_validate_starting_state)
 python_graph.add_node("node_invoke_llm_python", node_invoke_llm_python)

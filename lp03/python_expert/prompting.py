@@ -37,12 +37,14 @@ If there is any special guidance for this source_version, it will be provided he
 
 The target cluster's version is <target_version>{target_version}</target_version>.
 
-The index-level settings JSON from the source cluster will be in the following format:
+The input JSON will the settings for an Index from the source cluster, and will ALWAYS be in the following format:
 <source_json_format>
 * A dictionary with two keys: "indexName" and "indexJson".
 * The "indexName" key will contain a string with the original name of the index.
 * The "indexJson" key will contain a dictionary with the raw JSON defining the index's configuration.
 </source_json_format>
+
+The output of the transformation function you create will ALWAYS be a list containing one or more entries that confirm to the source_json_format.
 
 The index-level settings JSON from the source cluster is:
 <source_json>{source_json}</source_json>

@@ -1,13 +1,18 @@
+from dataclasses import dataclass
 import requests
 import logging
 from typing import Optional, Dict, Any
 
 logger = logging.getLogger(__name__)
 
+@dataclass
+class ConnectionDetails:
+    base_url: str
+
 # Raw REST client responsible for making HTTP requests to the OpenSearch cluster
-class RESTClient:
-    def __init__(self, base_url: str) -> None:
-        self.base_url = base_url.rstrip('/')
+class RESTClient():
+    def __init__(self, connection_details: ConnectionDetails) -> None:
+        self.base_url = connection_details.base_url.rstrip('/')
 
     def get(self, endpoint: str) -> Dict[str, Any]:
         url = f"{self.base_url}/{endpoint}"
@@ -40,3 +45,4 @@ class RESTClient:
         response.raise_for_status()
         logger.debug(f"DELETE response: {response.status_code} {response.text}")
         return response.json()
+

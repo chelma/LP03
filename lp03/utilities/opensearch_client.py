@@ -5,7 +5,9 @@ from utilities.rest_client import RESTClient
 
 logger = logging.getLogger(__name__)
 
-class OpenSearchClient:
+class OpenSearchClient():
+    rest_client: RESTClient
+
     def __init__(self, rest_client: RESTClient) -> None:
         self.rest_client = rest_client
 

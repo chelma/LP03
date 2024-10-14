@@ -3,13 +3,16 @@ import os
 from typing import Any, Callable, Dict, List
 
 def get_transform_file_path(transform_files_dir: str, transform_id: str) -> str:
-    return os.path.join(transform_files_dir, f"{transform_id}.json")
+    return os.path.join(transform_files_dir, f"{transform_id}_transform.py")
 
 def get_transform_input_file_path(transform_files_dir: str, transform_id: str) -> str:
     return os.path.join(transform_files_dir, f"{transform_id}_input.json")
 
 def get_transform_output_file_path(transform_files_dir: str, transform_id: str) -> str:
     return os.path.join(transform_files_dir, f"{transform_id}_output.json")
+
+def get_transform_report_file_path(transform_files_dir: str, transform_id: str) -> str:
+    return os.path.join(transform_files_dir, f"{transform_id}_report.json")
 
 def load_transform_from_file(transform_file_path: str) -> Callable[[Dict[str, Any]], List[Dict[str, Any]]]:
     module_spec = importlib.util.spec_from_file_location("transform", transform_file_path)

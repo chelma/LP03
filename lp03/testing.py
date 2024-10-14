@@ -1,10 +1,11 @@
 import logging
 
-from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
+from langchain_core.messages import HumanMessage
 
 from python_expert.prompting import get_transform_index_prompt
 from python_expert.graph import PythonState, PYTHON_GRAPH_RUNNER, python_state_to_json
 from utilities.logging import configure_logging
+from utilities.rest_client import ConnectionDetails
 
 configure_logging("./debug.log", "./info.log")
 
@@ -41,12 +42,17 @@ system_message = get_transform_index_prompt(
     transform_input
 )
 
+
+connection_details = ConnectionDetails(
+    base_url="http://localhost:29200"
+)
+
 python_state = PythonState(
     input = transform_input,
     python_turns = [
         system_message
     ],
-    approval_in_progress = False,
+    connection_details = connection_details,
     transform_files_dir="/tmp/transforms"
 )
 python_state["python_turns"].append(
