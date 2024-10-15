@@ -3,7 +3,7 @@ import logging
 from langchain_core.messages import HumanMessage
 
 from python_expert.prompting import get_transform_index_prompt
-from python_expert.graph import PythonState, PYTHON_GRAPH_RUNNER, python_state_to_json
+from python_expert.graph import PythonState, PYTHON_GRAPH, PYTHON_GRAPH_RUNNER, python_state_to_json
 from utilities.logging import configure_logging
 from utilities.rest_client import ConnectionDetails
 
@@ -60,3 +60,6 @@ python_state["python_turns"].append(
 )
 final_state = PYTHON_GRAPH_RUNNER(python_state, 42)
 logger.info(f"Final state: {python_state_to_json(final_state)}")
+
+
+PYTHON_GRAPH.get_graph(xray=1).draw_mermaid_png(output_file_path="python_graph.png")
